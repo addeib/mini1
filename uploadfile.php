@@ -1,0 +1,73 @@
+<html>
+<head>
+<body>
+
+<h1>Upload new files</h1>
+
+<?php 
+
+if ($_FILES['userfile']['error'] > 0)
+{
+	echo 'problem: ';
+	switch ($_FILES['userfile']['error'])
+	{
+		case 1: echo 'File exceeded upload_max_filesize'; break;
+		case 2: echo 'File exceeded max_file_size'; break;
+		case 3: echo 'File only partially uploaded'; break;
+		case 4; echo 'No file uploaded'; break;
+	}
+	exit;
+}
+
+//Does the file have the right MIME type?
+if ($_FILES['userfile']['type'] != 'text/plain')
+{
+	echo 'problem: file is not plain text';
+	exit;
+}
+
+//put the file where we do like it
+$upfile = '/upload/'.$_FILES['userfile']['name'];
+
+if (is_uploaded_file($_FILES['userfile']['tmp_name']))
+{
+	if (!move_uploaded_file($_FILES['userfile'][tmp_name], $upfile))
+	{
+		echo 'Problem: could not move file to destination directory';
+		exit;
+	}
+}
+else
+{
+	echo 'Problem: Possible file upload attack. Filename: ';
+	echo $_FILES['userfile']['name'];
+	exit;
+}
+
+echo 'File uploaded successfully<br><br>';
+
+//reformat the file contents
+$fp = fopen($upfile, 'r');
+$contents = fread ($fp, filesize ($upfile));
+fclose ($fp);
+
+$contents = strip_tags($contents);
+$fp = fopen($upfile, 'w');
+fwrite($fp, $contents);
+fclose($fp);
+
+//show what was uploaded
+echo 'Preview of uploaded file contents:<br><hr>';
+echo $contents;
+echo '<br><hr>';
+
+?>
+
+<form enctype="multipart/form-data" action="upload.php" method="post">
+<input type="hidden" name="MAX_FILE_SIZE" value="1000000">
+Upload this file : <input name="userfile" type="file">
+<input type="submit" value="Send File">
+</form>
+</body>
+</head>
+</html>
